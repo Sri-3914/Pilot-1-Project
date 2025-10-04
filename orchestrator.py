@@ -40,24 +40,35 @@ class QueryOrchestrator:
     async def process_angle(self, angle: str) -> Dict[str, Any]:
         """Process a single analytical angle through Stravito API"""
         try:
+            print(f"Processing angle: {angle}")  # Debug log
+            
             # Create conversation for this angle
             conversation_response = create_conversation(angle)
+            print(f"Conversation response: {conversation_response}")  # Debug log
+            
             conversation_id = conversation_response.get('conversation_id')
             
             if not conversation_id:
-                return {"angle": angle, "error": "Failed to create conversation", "data": None}
+                error_msg = f"Failed to create conversation. Response: {conversation_response}"
+                print(f"ERROR: {error_msg}")  # Debug log
+                return {"angle": angle, "error": error_msg, "data": None}
             
             # Get the message from the conversation
             messages = conversation_response.get('messages', [])
             if not messages:
-                return {"angle": angle, "error": "No messages in conversation", "data": None}
+                error_msg = f"No messages in conversation. Response: {conversation_response}"
+                print(f"ERROR: {error_msg}")  # Debug log
+                return {"angle": angle, "error": error_msg, "data": None}
             
             message_id = messages[0].get('id')
             if not message_id:
-                return {"angle": angle, "error": "No message ID found", "data": None}
+                error_msg = f"No message ID found. Messages: {messages}"
+                print(f"ERROR: {error_msg}")  # Debug log
+                return {"angle": angle, "error": error_msg, "data": None}
             
             # Get the full message details
             message_data = get_message(conversation_id, message_id)
+            print(f"Message data retrieved for angle: {angle}")  # Debug log
             
             return {
                 "angle": angle,
@@ -68,7 +79,9 @@ class QueryOrchestrator:
             }
             
         except Exception as e:
-            return {"angle": angle, "error": str(e), "data": None}
+            error_msg = f"Exception processing angle '{angle}': {str(e)}"
+            print(f"EXCEPTION: {error_msg}")  # Debug log
+            return {"angle": angle, "error": error_msg, "data": None}
 
     async def normalize_responses(self, responses: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Normalize and clean the responses from different angles"""
@@ -187,30 +200,47 @@ class QueryOrchestrator:
     async def orchestrate_query(self, query: str) -> Dict[str, Any]:
         """Main orchestration method that handles the entire process"""
         try:
+            print(f"Starting orchestration for query: {query}")  # Debug log
+            
             # Step 1: Generate multiple analytical angles
+            print("Step 1: Generating analytical angles...")  # Debug log
             angles = await self.analyze_query_angles(query)
+            print(f"Generated {len(angles)} angles: {angles}")  # Debug log
             
             # Step 2: Process all angles in parallel
+            print("Step 2: Processing angles through Stravito API...")  # Debug log
             tasks = [self.process_angle(angle) for angle in angles]
             raw_responses = await asyncio.gather(*tasks, return_exceptions=True)
+            print(f"Received {len(raw_responses)} raw responses")  # Debug log
             
             # Filter out exceptions and convert to proper format
             valid_responses = []
-            for response in raw_responses:
+            for i, response in enumerate(raw_responses):
                 if isinstance(response, Exception):
+                    print(f"Response {i} was an exception: {response}")  # Debug log
                     continue
                 if response.get("error") is None:
                     valid_responses.append(response)
+                    print(f"Response {i} is valid")  # Debug log
+                else:
+                    print(f"Response {i} has error: {response.get('error')}")  # Debug log
+            
+            print(f"Valid responses: {len(valid_responses)}")  # Debug log
             
             # Step 3: Normalize responses
+            print("Step 3: Normalizing responses...")  # Debug log
             normalized_responses = await self.normalize_responses(valid_responses)
+            print(f"Normalized {len(normalized_responses)} responses")  # Debug log
             
             # Step 4: Check for contradictions
+            print("Step 4: Checking for contradictions...")  # Debug log
             analyzed_responses = await self.check_contradictions(normalized_responses)
             
             # Step 5: Synthesize final report
+            print("Step 5: Synthesizing final report...")  # Debug log
             final_report = await self.synthesize_report(analyzed_responses, query)
             
+            print("Orchestration completed successfully")  # Debug log
             return {
                 "success": True,
                 "original_query": query,
@@ -221,6 +251,7 @@ class QueryOrchestrator:
             }
             
         except Exception as e:
+            print(f"Orchestration failed with exception: {str(e)}")  # Debug log
             return {
                 "success": False,
                 "error": str(e),

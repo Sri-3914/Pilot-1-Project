@@ -170,25 +170,19 @@ def main():
             "Analyze the impact of remote work on productivity"
         ]
         
-        for query in example_queries:
-            if st.button(f"📝 {query[:50]}...", key=f"example_{hash(query)}"):
-                st.session_state.example_query = query
+        st.markdown("**Try these example queries:**")
+        for i, query in enumerate(example_queries, 1):
+            st.markdown(f"{i}. {query}")
     
     # Main content area
     st.header("🎯 Query Input")
     
     # Query input
-    default_query = st.session_state.get('example_query', '')
     query = st.text_area(
         "Enter your query:",
-        value=default_query,
         height=100,
         placeholder="Type your question here... The system will analyze it from multiple angles and provide a comprehensive report."
     )
-    
-    # Clear example query after use
-    if 'example_query' in st.session_state:
-        del st.session_state.example_query
     
     # Process button
     col1, col2, col3 = st.columns([1, 2, 1])

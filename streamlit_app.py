@@ -117,8 +117,8 @@ def display_query_result(result: Dict[str, Any]):
                 
                 # Contradiction analysis if available
                 if response.get('contradiction_analysis'):
-                    with st.expander("Contradiction Analysis"):
-                        st.write(response['contradiction_analysis'])
+                    st.write("**Contradiction Analysis:**")
+                    st.write(response['contradiction_analysis'])
                 
                 st.divider()
 

@@ -31,8 +31,7 @@ class QueryOrchestrator:
         
         response = self.client.chat.completions.create(
             model=self.deployment_name,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.7
+            messages=[{"role": "user", "content": prompt}]
         )
         
         angles = [line.strip() for line in response.choices[0].message.content.split('\n') if line.strip()]
@@ -122,8 +121,7 @@ class QueryOrchestrator:
         try:
             response = self.client.chat.completions.create(
                 model=self.deployment_name,
-                messages=[{"role": "user", "content": summary_prompt}],
-                temperature=0.3
+                messages=[{"role": "user", "content": summary_prompt}]
             )
             
             # Parse the response (simplified - in production, use proper JSON parsing)
@@ -170,8 +168,7 @@ class QueryOrchestrator:
         try:
             response = self.client.chat.completions.create(
                 model=self.deployment_name,
-                messages=[{"role": "user", "content": synthesis_prompt}],
-                temperature=0.4
+                messages=[{"role": "user", "content": synthesis_prompt}]
             )
             
             synthesized_report = response.choices[0].message.content

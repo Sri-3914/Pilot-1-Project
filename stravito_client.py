@@ -7,7 +7,7 @@ headers = {"x-api-key": IHUB_API_KEY, "Content-Type": "application/json"}
 def create_conversation(query: str) -> Dict[str, Any]:
     """Create a new conversation with Stravito API"""
     url = f"{IHUB_BASE_URL}/assistant/conversations"
-    r = requests.post(url, headers=headers, json={"query": query})
+    r = requests.post(url, headers=headers, json={"message": query})
     r.raise_for_status()
     return r.json()
 
@@ -21,7 +21,7 @@ def get_message(conversation_id: str, message_id: str) -> Dict[str, Any]:
 def send_followup(conversation_id: str, query: str) -> Dict[str, Any]:
     """Send a follow-up message to an existing conversation"""
     url = f"{IHUB_BASE_URL}/assistant/conversations/{conversation_id}/messages"
-    r = requests.post(url, headers=headers, json={"query": query})
+    r = requests.post(url, headers=headers, json={"message": query})
     r.raise_for_status()
     return r.json()
 

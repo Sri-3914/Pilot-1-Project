@@ -46,23 +46,17 @@ class QueryOrchestrator:
             conversation_response = create_conversation(angle)
             print(f"Conversation response: {conversation_response}")  # Debug log
             
-            conversation_id = conversation_response.get('conversation_id')
+            conversation_id = conversation_response.get('conversationId')
             
             if not conversation_id:
                 error_msg = f"Failed to create conversation. Response: {conversation_response}"
                 print(f"ERROR: {error_msg}")  # Debug log
                 return {"angle": angle, "error": error_msg, "data": None}
             
-            # Get the message from the conversation
-            messages = conversation_response.get('messages', [])
-            if not messages:
-                error_msg = f"No messages in conversation. Response: {conversation_response}"
-                print(f"ERROR: {error_msg}")  # Debug log
-                return {"angle": angle, "error": error_msg, "data": None}
-            
-            message_id = messages[0].get('id')
+            # Get the message ID directly from the response
+            message_id = conversation_response.get('messageId')
             if not message_id:
-                error_msg = f"No message ID found. Messages: {messages}"
+                error_msg = f"No message ID found. Response: {conversation_response}"
                 print(f"ERROR: {error_msg}")  # Debug log
                 return {"angle": angle, "error": error_msg, "data": None}
             

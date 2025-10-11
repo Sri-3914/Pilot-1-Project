@@ -60,9 +60,25 @@ class QueryOrchestrator:
                 print(f"ERROR: {error_msg}")  # Debug log
                 return {"angle": angle, "error": error_msg, "data": None}
             
-            # Get the full message details
+            # Get the full message details (this will poll until COMPLETED)
             message_data = get_message(conversation_id, message_id)
-            print(f"Message data retrieved for angle: {angle}")  # Debug log
+            
+            # Check if message completed successfully
+            status = message_data.get('status', '').upper()
+            print(f"[ORCHESTRATOR] Message data retrieved for angle: {angle}")
+            print(f"[ORCHESTRATOR] Final status: {status}")
+            
+            if status != 'COMPLETED':
+                error_msg = f"Message did not complete successfully. Status: {status}"
+                print(f"[ORCHESTRATOR] WARNING: {error_msg}")
+                # Still return the data, but note the error
+                return {
+                    "angle": angle,
+                    "conversation_id": conversation_id,
+                    "message_id": message_id,
+                    "data": message_data,
+                    "error": error_msg
+                }
             
             return {
                 "angle": angle,

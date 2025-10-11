@@ -14,6 +14,11 @@ AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
 AZURE_OPENAI_API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-15-preview")
 AZURE_OPENAI_DEPLOYMENT_NAME = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
 
+# Polling Configuration for Stravito API
+# Maximum time to wait for message completion (in seconds)
+STRAVITO_POLL_MAX_RETRIES = int(os.getenv("STRAVITO_POLL_MAX_RETRIES", "60"))  # 60 polls = 2 minutes
+STRAVITO_POLL_INTERVAL = int(os.getenv("STRAVITO_POLL_INTERVAL", "2"))  # Poll every 2 seconds
+
 # Validate required environment variables
 required_vars = [
     "IHUB_API_KEY", "IHUB_BASE_URL", 

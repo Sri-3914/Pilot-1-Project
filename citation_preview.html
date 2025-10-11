@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Citation System Preview - Stravito Query Orchestrator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .report-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 40px;
+            border-left: 5px solid #4CAF50;
+        }
+
+        .report-content {
+            color: #333;
+            line-height: 1.8;
+        }
+
+        .report-content h2 {
+            color: #2c3e50;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .report-content h3 {
+            color: #34495e;
+            margin-top: 15px;
+            margin-bottom: 8px;
+        }
+
+        .citation-badges-container {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+
+        .source-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin: 5px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .source-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            opacity: 0.9;
+        }
+
+        .sources-header {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sources-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .citation-card {
+            background-color: #f8f9fa;
+            border-left: 4px solid #4CAF50;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .citation-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .citation-number {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 1em;
+        }
+
+        .citation-title {
+            color: #1976D2;
+            font-weight: 600;
+            font-size: 1.2em;
+            margin: 12px 0;
+            text-decoration: none;
+            display: block;
+            transition: color 0.3s ease;
+        }
+
+        .citation-title:hover {
+            color: #1565C0;
+            text-decoration: underline;
+        }
+
+        .citation-excerpt {
+            color: #555;
+            font-style: italic;
+            margin: 15px 0;
+            line-height: 1.6;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border-left: 3px solid #ddd;
+        }
+
+        .citation-meta {
+            color: #888;
+            font-size: 0.9em;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .badge-label {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .info-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .feature-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+
+        .feature-item h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .sources-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Citation System Preview</h1>
+        <p class="subtitle">Stravito Query Orchestrator - Interactive Source Attribution</p>
+
+        <div class="info-banner">
+            <h2>✨ ChatGPT-Style Citations</h2>
+            <p>This is a preview of how sources are displayed in the Streamlit application</p>
+        </div>
+
+        <!-- Features Overview -->
+        <div class="feature-list">
+            <div class="feature-item">
+                <h3>📌 Numbered Citations</h3>
+                <p>Each source gets a unique number badge for easy reference</p>
+            </div>
+            <div class="feature-item">
+                <h3>🔗 Clickable Links</h3>
+                <p>All source titles link directly to the original documents</p>
+            </div>
+            <div class="feature-item">
+                <h3>📄 Text Excerpts</h3>
+                <p>Preview relevant content from each source</p>
+            </div>
+            <div class="feature-item">
+                <h3>📍 Page References</h3>
+                <p>Know exactly where the information came from</p>
+            </div>
+        </div>
+
+        <!-- Sample Report with Citations -->
+        <div class="report-section">
+            <h2 style="color: #333; margin-bottom: 20px;">📊 Synthesized Report Example</h2>
+            <div class="report-content">
+                <h2>Executive Summary</h2>
+                <p>Artificial Intelligence is transforming healthcare through significant improvements in diagnostic accuracy, substantial investment growth, and evolving ethical frameworks.</p>
+
+                <h3>Diagnostic Improvements</h3>
+                <p>AI-powered diagnostic tools have demonstrated remarkable improvements, with accuracy gains of 35% compared to traditional methods. Clinical trials show a 42% reduction in misdiagnosis rates, while diagnosis time has decreased dramatically from 48 hours to just 6 hours.</p>
+
+                <h3>Market Growth</h3>
+                <p>The healthcare AI market is experiencing explosive growth, with Q3 2025 investments reaching $8.2 billion - a 45% increase year-over-year. The market is projected to maintain a robust 28% CAGR through 2030.</p>
+
+                <div class="citation-badges-container">
+                    <div class="badge-label">📎 Quick Citations:</div>
+                    <a href="#source-1" class="source-badge">[1]</a>
+                    <a href="#source-2" class="source-badge">[2]</a>
+                    <a href="#source-3" class="source-badge">[3]</a>
+                    <a href="#source-4" class="source-badge">[4]</a>
+                    <a href="#source-5" class="source-badge">[5]</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sources Section -->
+        <h2 class="sources-header">
+            <span>📚</span>
+            <span>Sources</span>
+        </h2>
+        <p style="color: #666; margin-bottom: 20px; font-style: italic;">
+            Click on any source to view the original document
+        </p>
+
+        <div class="sources-grid">
+            <!-- Source 1 -->
+            <div class="citation-card" id="source-1">
+                <span class="citation-number">[1]</span>
+                <a href="https://example.com/ai-healthcare-2025" target="_blank" class="citation-title">
+                    The Future of Artificial Intelligence in Healthcare
+                </a>
+                <div class="citation-excerpt">
+                    "Recent studies show that AI-powered diagnostic tools have improved accuracy by 35% compared to traditional methods. The integration of machine learning algorithms in medical imaging has revolutionized early disease detection."
+                </div>
+                <div class="citation-meta">
+                    📖 Page 12 | ID: ref-001
+                </div>
+            </div>
+
+            <!-- Source 2 -->
+            <div class="citation-card" id="source-2">
+                <span class="citation-number">[2]</span>
+                <a href="https://example.com/market-analysis-ai" target="_blank" class="citation-title">
+                    Market Analysis: AI Investment Trends Q3 2025
+                </a>
+                <div class="citation-excerpt">
+                    "Investment in AI healthcare startups reached $8.2 billion in Q3 2025, representing a 45% year-over-year increase. The market is expected to continue growing at a CAGR of 28% through 2030."
+                </div>
+                <div class="citation-meta">
+                    📖 Page 5 | ID: ref-002
+                </div>
+            </div>
+
+            <!-- Source 3 -->
+            <div class="citation-card" id="source-3">
+                <span class="citation-number">[3]</span>
+                <a href="https://example.com/clinical-trials-results" target="_blank" class="citation-title">
+                    Clinical Trials: AI-Assisted Diagnosis Results
+                </a>
+                <div class="citation-excerpt">
+                    "A randomized controlled trial involving 5,000 patients demonstrated that AI-assisted diagnosis reduced misdiagnosis rates by 42% and decreased average diagnosis time from 48 hours to 6 hours."
+                </div>
+                <div class="citation-meta">
+                    📖 Page 23 | ID: ref-003
+                </div>
+            </div>
+
+            <!-- Source 4 -->
+            <div class="citation-card" id="source-4">
+                <span class="citation-number">[4]</span>
+                <a href="https://example.com/ethics-medical-ai" target="_blank" class="citation-title">
+                    Ethical Considerations in Medical AI
+                </a>
+                <div class="citation-excerpt">
+                    "While AI shows promising results, concerns about data privacy, algorithmic bias, and the need for human oversight remain critical. Healthcare providers must balance innovation with patient safety and ethical considerations."
+                </div>
+                <div class="citation-meta">
+                    📖 Page 8 | ID: ref-004
+                </div>
+            </div>
+
+            <!-- Source 5 -->
+            <div class="citation-card" id="source-5">
+                <span class="citation-number">[5]</span>
+                <a href="https://example.com/implementation-guide" target="_blank" class="citation-title">
+                    Implementation Guide: AI in Hospital Systems
+                </a>
+                <div class="citation-excerpt">
+                    "Successful implementation of AI systems in hospitals requires comprehensive staff training, robust data infrastructure, and clear protocols for AI-human collaboration. Integration costs typically range from $500K to $5M depending on facility size."
+                </div>
+                <div class="citation-meta">
+                    📖 Page 15 | ID: ref-005
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Info -->
+        <div style="margin-top: 50px; padding-top: 30px; border-top: 2px solid #eee; text-align: center; color: #666;">
+            <p><strong>🎨 Design Features:</strong></p>
+            <p>Hover effects • Clickable links • Responsive grid • Card-based layout • Quick citation badges</p>
+            <p style="margin-top: 20px; font-size: 0.9em;">
+                This preview demonstrates the citation system as it appears in the Streamlit application.<br>
+                See <code>CITATIONS_GUIDE.md</code> for detailed documentation.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Smooth scroll to citations when clicking badges
+        document.querySelectorAll('.source-badge').forEach(badge => {
+            badge.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = badge.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Add a temporary highlight effect
+                    targetElement.style.backgroundColor = '#fff3cd';
+                    setTimeout(() => {
+                        targetElement.style.backgroundColor = '';
+                    }, 2000);
+                }
+            });
+        });
+
+        // Add tooltip on hover for citation numbers
+        document.querySelectorAll('.citation-number').forEach(el => {
+            el.setAttribute('title', 'Click to copy citation');
+        });
+    </script>
+</body>
+</html>
+

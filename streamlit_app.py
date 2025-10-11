@@ -81,6 +81,20 @@ def display_query_result(result: Dict[str, Any]):
         # Display the synthesized report in an expandable section
         with st.expander("View Complete Report", expanded=True):
             st.markdown(final_report.get("synthesized_report", "No report generated"))
+        # Display citations or sources if available
+citations = result.get("citations", [])
+if citations:
+    st.subheader("🔗 Sources & Citations")
+    with st.expander("View Citations", expanded=False):
+        for src in citations:
+            title = src.get("title", "View Source")
+            url = src.get("url", "")
+            if url:
+                st.markdown(f"- [{title}]({url})")
+            else:
+                st.markdown(f"- {title}")
+else:
+    st.info("No citations or source links found for this report.")
     
     # Processing statistics
     col1, col2, col3 = st.columns(3)

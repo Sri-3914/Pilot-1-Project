@@ -89,6 +89,17 @@ class QueryOrchestrator:
             if not data:
                 continue
             
+# 🆕 Extract sources/citations if available in response or data
+        sources = []
+        # Example structure from iHub API: response["data"]["sources"]
+        if "sources" in data:
+            for src in data.get("sources", []):
+                title = src.get("title", "View Source")
+                url = src.get("url") or src.get("link") or ""
+                if url:
+                    sources.append({"title": title, "url": url})
+
+
             # Extract key information
             normalized_response = {
                 "angle": response["angle"],
@@ -97,7 +108,9 @@ class QueryOrchestrator:
                 "content": data.get("content", ""),
                 "metadata": data.get("metadata", {}),
                 "timestamp": data.get("timestamp", ""),
-                "status": data.get("status", "")
+                "status": data.get("status", ""),
+                 # 🆕 Add the extracted sources
+            "sources": sources,
             }
             normalized.append(normalized_response)
         

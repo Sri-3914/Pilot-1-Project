@@ -34,6 +34,7 @@ class QueryResponse(BaseModel):
     final_report: Dict[str, Any] = {}
     raw_responses: list = []
     error: str = None
+    citations: list = []  # 🆕 Add this line
 
 @app.get("/")
 async def root():
@@ -64,10 +65,23 @@ async def process_query(request: QueryRequest):
         if not request.query.strip():
             raise HTTPException(status_code=400, detail="Query cannot be empty")
         
-        # Process the query through orchestration
-        result = await orchestrator.orchestrate_query(request.query)
-        
-        return QueryResponse(**result)
+       # Process the query through orchestration
+result = await orchestrator.orchestrate_query(request.query)
+
+# 🆕 Step: Aggregate citations from all normalized/analyzed responses
+citations = []
+for angle_response in result.get("raw_responses", []):
+    if "sources" in angle_response:
+        citations.extend(angle_response["sources"])
+
+# Optionally deduplicate citations
+unique_citations = {src["url"]: src for src in citations if src.get("url")}
+result["citations"] = list(unique_citations.values())
+
+# 🧩 Optional: Debug log
+print(f"Collected {len(result['citations'])} citations")
+
+return QueryResponse(**result)
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

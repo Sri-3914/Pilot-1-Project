@@ -214,6 +214,18 @@ def display_query_result(result: Dict[str, Any]):
         st.error(f"Query processing failed: {result.get('error', 'Unknown error')}")
         return
     
+    # Log what we received
+    final_report = result.get("final_report", {})
+    sources = final_report.get("sources", [])
+    print(f"\n[STREAMLIT] ========== DISPLAYING RESULTS ==========")
+    print(f"[STREAMLIT] Sources in final_report: {len(sources)}")
+    if sources:
+        for i, source in enumerate(sources):
+            print(f"[STREAMLIT]   [{i+1}] {source.get('title', 'Untitled')[:50]}")
+    else:
+        print(f"[STREAMLIT] ⚠️  No sources received from API!")
+    print(f"[STREAMLIT] ==========================================\n")
+    
     # Main results section
     st.success("✅ Query processed successfully!")
     
@@ -244,9 +256,26 @@ def display_query_result(result: Dict[str, Any]):
     
     # Display sources/citations
     sources = final_report.get("sources", [])
+    
+    # Debug info (can be removed later)
+    with st.expander("🔍 Debug: Source Information", expanded=False):
+        st.write(f"**Sources received from API:** {len(sources)}")
+        if sources:
+            st.write("**Source IDs:**")
+            for i, source in enumerate(sources):
+                st.write(f"  {i+1}. ID: {source.get('sourceId', 'N/A')}, Title: {source.get('title', 'N/A')}")
+        else:
+            st.warning("No sources were included in the API response!")
+            st.write("**Possible reasons:**")
+            st.write("- Stravito API did not return sources")
+            st.write("- Sources are in a different field")
+            st.write("- Check server logs for details")
+    
     if sources:
         st.divider()
         display_sources(sources)
+    else:
+        st.info("ℹ️ No sources available for this query.")
     
     # Processing statistics
     col1, col2, col3 = st.columns(3)

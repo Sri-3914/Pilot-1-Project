@@ -3,8 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, Any
 import asyncio
-from orchestrator import QueryOrchestrator
+import sys
 
+# Initialize FastAPI app first
 app = FastAPI(
     title="Stravito Query Orchestrator",
     description="FastAPI backend for orchestrating multi-angle queries through Stravito API with Azure OpenAI synthesis",
@@ -20,8 +21,47 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize orchestrator
-orchestrator = QueryOrchestrator()
+# Initialize orchestrator with error handling
+orchestrator = None
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize orchestrator on startup with proper error handling"""
+    global orchestrator
+    try:
+        print("🚀 Starting Stravito Query Orchestrator...")
+        print("📋 Checking configuration...")
+        
+        # Import here to catch configuration errors
+        from orchestrator import QueryOrchestrator
+        
+        print("✅ Configuration validated")
+        print("🔧 Initializing orchestrator...")
+        
+        orchestrator = QueryOrchestrator()
+        
+        print("✅ Orchestrator initialized successfully")
+        print("🌐 Server is ready to accept requests")
+        
+    except ValueError as e:
+        print("\n" + "="*80)
+        print("❌ CONFIGURATION ERROR")
+        print("="*80)
+        print(f"\n{e}\n")
+        print("Please check your .env file and ensure all required variables are set.")
+        print("Run 'python diagnose_startup.py' for detailed diagnostics.\n")
+        print("="*80 + "\n")
+        sys.exit(1)
+    except Exception as e:
+        print("\n" + "="*80)
+        print("❌ STARTUP ERROR")
+        print("="*80)
+        print(f"\nError: {e}\n")
+        print("Run 'python diagnose_startup.py' for detailed diagnostics.\n")
+        print("="*80 + "\n")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
 
 class QueryRequest(BaseModel):
     query: str
@@ -61,15 +101,53 @@ async def process_query(request: QueryRequest):
     4. Synthesizes a comprehensive report using Azure OpenAI
     """
     try:
+        if orchestrator is None:
+            raise HTTPException(
+                status_code=503, 
+                detail="Service not ready. Orchestrator failed to initialize. Check server logs."
+            )
+        
         if not request.query.strip():
             raise HTTPException(status_code=400, detail="Query cannot be empty")
+        
+        print(f"\n[MAIN] ========== NEW QUERY REQUEST ==========")
+        print(f"[MAIN] Query: {request.query[:100]}...")
         
         # Process the query through orchestration
         result = await orchestrator.orchestrate_query(request.query)
         
+        # Log source information being returned to frontend
+        final_report = result.get("final_report", {})
+        sources = final_report.get("sources", [])
+        
+        print(f"\n[MAIN] ========== SENDING RESPONSE TO FRONTEND ==========")
+        print(f"[MAIN] Success: {result.get('success', False)}")
+        print(f"[MAIN] Sources in final_report: {len(sources)}")
+        
+        if sources:
+            print(f"[MAIN] Source details being sent:")
+            for i, source in enumerate(sources):
+                print(f"[MAIN]   [{i+1}] {source.get('title', 'Untitled')[:50]}")
+                print(f"[MAIN]       URL: {source.get('url', 'N/A')}")
+                print(f"[MAIN]       Page: {source.get('pageNumber', 'N/A')}")
+        else:
+            print(f"[MAIN] ⚠️  WARNING: No sources being sent to frontend!")
+        
+        # Also log raw_responses sources
+        raw_responses = result.get("raw_responses", [])
+        total_raw_sources = sum(len(r.get('sources', [])) for r in raw_responses)
+        print(f"[MAIN] Total sources in raw_responses: {total_raw_sources}")
+        
+        print(f"[MAIN] ========================================\n")
+        
         return QueryResponse(**result)
         
+    except HTTPException:
+        raise
     except Exception as e:
+        print(f"[MAIN] ❌ Error processing query: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @app.get("/query/{query_id}")

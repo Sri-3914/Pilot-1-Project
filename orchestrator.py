@@ -81,13 +81,27 @@ class QueryOrchestrator:
         """Normalize and clean the responses from different angles"""
         normalized = []
         
-        for response in responses:
+        print(f"[ORCHESTRATOR] Normalizing {len(responses)} responses...")
+        
+        for i, response in enumerate(responses):
             if response.get("error"):
+                print(f"[ORCHESTRATOR] Response {i} has error, skipping")
                 continue
                 
             data = response.get("data", {})
             if not data:
+                print(f"[ORCHESTRATOR] Response {i} has no data, skipping")
                 continue
+            
+            # Extract sources with logging
+            sources = data.get("sources", [])
+            print(f"[ORCHESTRATOR] Response {i} ({response.get('angle', 'Unknown')[:50]}...)")
+            print(f"[ORCHESTRATOR]   - Content length: {len(data.get('content', ''))}")
+            print(f"[ORCHESTRATOR]   - Sources extracted: {len(sources)}")
+            
+            if sources:
+                for j, source in enumerate(sources):
+                    print(f"[ORCHESTRATOR]     Source {j+1}: {source.get('title', 'Untitled')[:40]} (ID: {source.get('sourceId', 'N/A')})")
             
             # Extract key information including sources
             normalized_response = {
@@ -98,10 +112,11 @@ class QueryOrchestrator:
                 "metadata": data.get("metadata", {}),
                 "timestamp": data.get("timestamp", ""),
                 "status": data.get("status", ""),
-                "sources": data.get("sources", [])  # Extract sources array
+                "sources": sources  # Extract sources array
             }
             normalized.append(normalized_response)
         
+        print(f"[ORCHESTRATOR] Normalized {len(normalized)} responses successfully")
         return normalized
 
     async def check_contradictions(self, responses: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -150,19 +165,31 @@ class QueryOrchestrator:
         if not responses:
             return {"error": "No valid responses to synthesize"}
         
+        print(f"[ORCHESTRATOR] Synthesizing report from {len(responses)} responses...")
+        
         # Prepare response texts for synthesis and collect all sources
         response_texts = []
         all_sources = []
         source_map = {}  # To deduplicate sources by sourceId
         
-        for r in responses:
+        for i, r in enumerate(responses):
             response_texts.append(f"Angle: {r['angle']}\nResponse: {r['content']}")
+            
             # Collect and deduplicate sources
-            for source in r.get('sources', []):
+            angle_sources = r.get('sources', [])
+            print(f"[ORCHESTRATOR] Processing sources from angle {i+1}: {len(angle_sources)} sources")
+            
+            for source in angle_sources:
                 source_id = source.get('sourceId')
-                if source_id and source_id not in source_map:
-                    source_map[source_id] = source
-                    all_sources.append(source)
+                if source_id:
+                    if source_id not in source_map:
+                        source_map[source_id] = source
+                        all_sources.append(source)
+                        print(f"[ORCHESTRATOR]   Added source: {source.get('title', 'Untitled')[:40]} (ID: {source_id})")
+                    else:
+                        print(f"[ORCHESTRATOR]   Skipped duplicate source: {source_id}")
+                else:
+                    print(f"[ORCHESTRATOR]   WARNING: Source has no sourceId, skipping: {source.get('title', 'Untitled')}")
         
         synthesis_prompt = f"""
         Original Query: "{original_query}"
@@ -190,6 +217,16 @@ class QueryOrchestrator:
             
             synthesized_report = response.choices[0].message.content
             
+            print(f"[ORCHESTRATOR] ✅ Report synthesis complete")
+            print(f"[ORCHESTRATOR] Total sources in final report: {len(all_sources)}")
+            
+            if all_sources:
+                print(f"[ORCHESTRATOR] Final source list:")
+                for i, source in enumerate(all_sources):
+                    print(f"[ORCHESTRATOR]   [{i+1}] {source.get('title', 'Untitled')[:50]}")
+            else:
+                print(f"[ORCHESTRATOR] ⚠️  WARNING: No sources in final report!")
+            
             return {
                 "original_query": original_query,
                 "synthesized_report": synthesized_report,
@@ -200,6 +237,7 @@ class QueryOrchestrator:
             }
             
         except Exception as e:
+            print(f"[ORCHESTRATOR] ❌ Error synthesizing report: {e}")
             return {"error": f"Failed to synthesize report: {str(e)}"}
 
     async def orchestrate_query(self, query: str) -> Dict[str, Any]:

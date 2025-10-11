@@ -78,7 +78,110 @@ st.markdown("""
     .source-badge:hover {
         opacity: 0.8;
     }
+    
+    /* Inline citation badge styling */
+    .inline-citation-badge {
+        display: inline-block;
+        background: #4CAF50;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 8px;
+        font-size: 0.7em;
+        font-weight: bold;
+        margin: 0 2px;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        vertical-align: super;
+        line-height: 1;
+    }
+    
+    .inline-citation-badge:hover {
+        background: #45a049;
+        transform: scale(1.1);
+        box-shadow: 0 2px 6px rgba(76, 175, 80, 0.4);
+    }
+    
+    /* Source detail card with expandable sections */
+    .source-detail-card {
+        background: white;
+        border: 2px solid #4CAF50;
+        border-radius: 12px;
+        padding: 20px;
+        margin: 15px 0;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .source-detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .source-detail-number {
+        background: #4CAF50;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 1.1em;
+    }
+    
+    .view-document-btn {
+        background: #1976D2;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        display: inline-block;
+    }
+    
+    .view-document-btn:hover {
+        background: #1565C0;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(25, 118, 210, 0.3);
+    }
+    
+    /* Smooth scroll behavior */
+    html {
+        scroll-behavior: smooth;
+    }
+    
+    /* Highlight animation for sources */
+    @keyframes highlightSource {
+        0% { background-color: #FFF9C4; }
+        100% { background-color: transparent; }
+    }
+    
+    .source-highlight {
+        animation: highlightSource 2s ease-in-out;
+    }
 </style>
+
+<script>
+function showSourceDetails(sourceNum) {
+    // Scroll to the sources section
+    const sourcesSection = document.getElementById('sources-section');
+    if (sourcesSection) {
+        sourcesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    
+    // Try to expand the specific source expander
+    // Note: Streamlit expanders are tricky to control, but we can highlight the area
+    setTimeout(() => {
+        const sourceElement = document.getElementById('source-' + sourceNum);
+        if (sourceElement) {
+            sourceElement.classList.add('source-highlight');
+            sourceElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, 500);
+    
+    return false; // Prevent default link behavior
+}
+</script>
 """, unsafe_allow_html=True)
 
 # API Configuration
@@ -101,86 +204,112 @@ def call_api(query: str) -> Dict[str, Any]:
         st.error(f"Unexpected error: {str(e)}")
         return None
 
-def add_citation_links(text: str, sources: List[Dict[str, Any]]) -> str:
-    """Add inline citation links to the text"""
+def add_inline_citations(text: str, sources: List[Dict[str, Any]]) -> str:
+    """Add inline citation badges after paragraphs"""
     if not sources or not text:
         return text
     
-    # Add citation summary at the end of text
-    citation_html = "<br><br><div style='margin-top: 20px; padding-top: 20px; border-top: 2px solid #eee;'>"
-    citation_html += "<strong>📎 Quick Citations:</strong><br>"
+    # Split text into paragraphs
+    paragraphs = text.split('\n\n')
     
-    for i, source in enumerate(sources):
-        title = source.get('title', 'Source')[:50]  # Truncate long titles
-        url = source.get('url', '')
-        if url:
-            citation_html += f'<a href="{url}" target="_blank" class="source-badge">[{i+1}]</a> '
-        else:
-            citation_html += f'<span class="source-badge">[{i+1}]</span> '
+    # Calculate how many sources per section (distribute evenly)
+    sources_per_section = max(1, len(sources) // max(1, len(paragraphs)))
     
-    citation_html += "</div>"
+    # Add citations after each paragraph
+    enhanced_paragraphs = []
+    source_index = 0
     
-    return text + citation_html
+    for i, para in enumerate(paragraphs):
+        if not para.strip():
+            enhanced_paragraphs.append(para)
+            continue
+        
+        # Add paragraph text
+        enhanced_para = para
+        
+        # Add citation badges at the end of substantial paragraphs
+        if len(para) > 100 and source_index < len(sources):  # Only for paragraphs > 100 chars
+            # Determine how many citations for this paragraph
+            num_citations = min(sources_per_section, len(sources) - source_index)
+            if num_citations > 0:
+                citation_badges = ' '
+                for j in range(num_citations):
+                    idx = source_index + j
+                    if idx < len(sources):
+                        # Create clickable badge that scrolls to source
+                        citation_badges += f'<a href="#source-{idx+1}" class="inline-citation-badge" onclick="showSourceDetails({idx+1}); return false;" title="Click to view source details">[{idx+1}]</a> '
+                
+                enhanced_para += citation_badges
+                source_index += num_citations
+        
+        enhanced_paragraphs.append(enhanced_para)
+    
+    # Rejoin paragraphs
+    result = '\n\n'.join(enhanced_paragraphs)
+    
+    # Add remaining citations at the end if any
+    if source_index < len(sources):
+        result += "\n\n<div style='margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;'>"
+        result += "<strong>📎 Additional Sources:</strong><br><br>"
+        for i in range(source_index, len(sources)):
+            result += f'<a href="#source-{i+1}" class="inline-citation-badge" onclick="showSourceDetails({i+1}); return false;">[{i+1}]</a> '
+        result += "</div>"
+    
+    return result
 
 def display_sources(sources: List[Dict[str, Any]]):
-    """Display sources as clickable citations similar to ChatGPT"""
+    """Display sources as expandable cards with links to actual documents"""
     if not sources:
         return
     
     st.subheader("📚 Sources")
-    st.markdown("*Click on any source to view the original document*")
+    st.markdown("*Click on a source to view details, then click 'View Original Document' to open it*")
     
-    # Display sources in a grid layout
-    cols_per_row = 2
-    for i in range(0, len(sources), cols_per_row):
-        cols = st.columns(cols_per_row)
-        for j, col in enumerate(cols):
-            idx = i + j
-            if idx < len(sources):
-                source = sources[idx]
-                with col:
-                    # Create a styled citation card
-                    title = source.get('title', 'Untitled Document')
-                    url = source.get('url', '')
-                    text = source.get('text', '')
-                    page_number = source.get('pageNumber')
-                    source_id = source.get('sourceId', '')
-                    
-                    # Build the citation card HTML
-                    card_html = f"""
-                    <div class="citation-card">
-                        <span class="citation-number">[{idx + 1}]</span>
-                        <div class="citation-title">
-                    """
-                    
-                    if url:
-                        card_html += f'<a href="{url}" target="_blank" style="color: #1976D2; text-decoration: none;">{title}</a>'
-                    else:
-                        card_html += f'{title}'
-                    
-                    card_html += "</div>"
-                    
-                    # Add excerpt if available
-                    if text:
-                        max_length = 200
-                        display_text = text if len(text) <= max_length else text[:max_length] + "..."
-                        card_html += f'<div class="citation-excerpt">"{display_text}"</div>'
-                    
-                    # Add metadata
-                    meta_parts = []
-                    if page_number:
-                        meta_parts.append(f"📖 Page {page_number}")
-                    if source_id:
-                        # Truncate long source IDs
-                        short_id = source_id[:30] + "..." if len(source_id) > 30 else source_id
-                        meta_parts.append(f"ID: {short_id}")
-                    
-                    if meta_parts:
-                        card_html += f'<div class="citation-meta">{" | ".join(meta_parts)}</div>'
-                    
-                    card_html += "</div>"
-                    
-                    st.markdown(card_html, unsafe_allow_html=True)
+    # Display each source as an expandable card
+    for idx, source in enumerate(sources):
+        source_num = idx + 1
+        title = source.get('title', 'Untitled Document')
+        url = source.get('url', '')
+        text = source.get('text', '')
+        page_number = source.get('pageNumber')
+        source_id = source.get('sourceId', '')
+        
+        # Create an expander for each source (acts as the detail view)
+        with st.expander(f"[{source_num}] {title[:80]}{'...' if len(title) > 80 else ''}", expanded=False):
+            # Source detail card
+            st.markdown(f"<div id='source-{source_num}' class='source-detail-card'>", unsafe_allow_html=True)
+            
+            # Full title
+            st.markdown(f"### 📄 {title}")
+            
+            # Excerpt
+            if text:
+                st.markdown("**Excerpt:**")
+                st.markdown(f"*\"{text}\"*")
+            
+            # Metadata
+            col1, col2 = st.columns(2)
+            with col1:
+                if page_number:
+                    st.markdown(f"📖 **Page:** {page_number}")
+            with col2:
+                if source_id:
+                    short_id = source_id[:40] + "..." if len(source_id) > 40 else source_id
+                    st.markdown(f"🔑 **ID:** `{short_id}`")
+            
+            st.markdown("---")
+            
+            # Button to view original document
+            if url:
+                st.markdown(
+                    f'<a href="{url}" target="_blank" class="view-document-btn">🔗 View Original Document</a>',
+                    unsafe_allow_html=True
+                )
+                st.caption(f"Opens: {url[:60]}{'...' if len(url) > 60 else ''}")
+            else:
+                st.warning("⚠️ No URL available for this source")
+            
+            st.markdown("</div>", unsafe_allow_html=True)
 
 def display_loading_animation():
     """Display a loading animation while processing"""
@@ -246,12 +375,14 @@ def display_query_result(result: Dict[str, Any]):
         
         # Add inline citation badges if sources exist
         if sources:
-            report_with_citations = add_citation_links(report_text, sources)
+            report_with_citations = add_inline_citations(report_text, sources)
         else:
             report_with_citations = report_text
         
         # Display the synthesized report in an expandable section
         with st.expander("View Complete Report", expanded=True):
+            st.markdown("💡 *Click on citation numbers [1], [2], etc. to view source details below*", unsafe_allow_html=True)
+            st.markdown("---")
             st.markdown(report_with_citations, unsafe_allow_html=True)
     
     # Display sources/citations
@@ -273,6 +404,7 @@ def display_query_result(result: Dict[str, Any]):
     
     if sources:
         st.divider()
+        st.markdown('<div id="sources-section"></div>', unsafe_allow_html=True)
         display_sources(sources)
     else:
         st.info("ℹ️ No sources available for this query.")

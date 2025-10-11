@@ -63,13 +63,13 @@ class QueryOrchestrator:
             # Get the full message details (this will poll until COMPLETED)
             message_data = get_message(conversation_id, message_id)
             
-            # Check if message completed successfully
-            status = message_data.get('status', '').upper()
+            # Check if message completed successfully (key is 'state' not 'status')
+            state = message_data.get('state', '').upper()
             print(f"[ORCHESTRATOR] Message data retrieved for angle: {angle}")
-            print(f"[ORCHESTRATOR] Final status: {status}")
+            print(f"[ORCHESTRATOR] Final state: {state}")
             
-            if status != 'COMPLETED':
-                error_msg = f"Message did not complete successfully. Status: {status}"
+            if state != 'COMPLETED':
+                error_msg = f"Message did not complete successfully. State: {state}"
                 print(f"[ORCHESTRATOR] WARNING: {error_msg}")
                 # Still return the data, but note the error
                 return {
@@ -110,9 +110,14 @@ class QueryOrchestrator:
                 continue
             
             # Extract sources with logging
+            # IMPORTANT: Response structure uses 'message' not 'content', and 'state' not 'status'
             sources = data.get("sources", [])
+            message_content = data.get("message", "")
+            state = data.get("state", "")
+            
             print(f"[ORCHESTRATOR] Response {i} ({response.get('angle', 'Unknown')[:50]}...)")
-            print(f"[ORCHESTRATOR]   - Content length: {len(data.get('content', ''))}")
+            print(f"[ORCHESTRATOR]   - Message length: {len(message_content)}")
+            print(f"[ORCHESTRATOR]   - State: {state}")
             print(f"[ORCHESTRATOR]   - Sources extracted: {len(sources)}")
             
             if sources:
@@ -124,10 +129,10 @@ class QueryOrchestrator:
                 "angle": response["angle"],
                 "conversation_id": response["conversation_id"],
                 "message_id": response["message_id"],
-                "content": data.get("content", ""),
+                "content": message_content,  # Use 'message' field from API
                 "metadata": data.get("metadata", {}),
                 "timestamp": data.get("timestamp", ""),
-                "status": data.get("status", ""),
+                "state": state,  # Use 'state' not 'status'
                 "sources": sources  # Extract sources array
             }
             normalized.append(normalized_response)

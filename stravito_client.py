@@ -51,18 +51,20 @@ def get_message(conversation_id: str, message_id: str, max_retries: int = None, 
             r.raise_for_status()
             response_data = r.json()
             
-            status = response_data.get('status', '').upper()
+            # IMPORTANT: The key is 'state' not 'status' in Stravito API
+            state = response_data.get('state', '').upper()
             
-            print(f"[STRAVITO_CLIENT] Poll #{retry_count + 1}: Status = {status}")
+            print(f"[STRAVITO_CLIENT] Poll #{retry_count + 1}: State = {state}")
             
-            if status == 'COMPLETED':
+            if state == 'COMPLETED':
                 elapsed = time.time() - start_time
                 print(f"[STRAVITO_CLIENT] ✅ Message completed in {elapsed:.1f}s after {retry_count + 1} polls")
                 
                 # Log source information
                 sources = response_data.get('sources', [])
+                message_content = response_data.get('message', '')
                 print(f"[STRAVITO_CLIENT] Message retrieved:")
-                print(f"[STRAVITO_CLIENT]   - Content length: {len(response_data.get('content', ''))}")
+                print(f"[STRAVITO_CLIENT]   - Message length: {len(message_content)}")
                 print(f"[STRAVITO_CLIENT]   - Sources found: {len(sources)}")
                 
                 if sources:
@@ -75,13 +77,13 @@ def get_message(conversation_id: str, message_id: str, max_retries: int = None, 
                 
                 return response_data
             
-            elif status == 'FAILED' or status == 'ERROR':
-                print(f"[STRAVITO_CLIENT] ❌ Message processing failed with status: {status}")
+            elif state == 'FAILED' or state == 'ERROR':
+                print(f"[STRAVITO_CLIENT] ❌ Message processing failed with state: {state}")
                 error_msg = response_data.get('error', 'Unknown error')
                 print(f"[STRAVITO_CLIENT] Error message: {error_msg}")
                 return response_data  # Return even if failed, orchestrator will handle
             
-            elif status in ['PROCESSING', 'PENDING', 'IN_PROGRESS', '']:
+            elif state in ['PROCESSING', 'PENDING', 'IN_PROGRESS', '']:
                 # Still processing, wait and retry
                 if retry_count == 0:
                     print(f"[STRAVITO_CLIENT] ⏳ Message is processing, will poll every {retry_interval}s...")
@@ -93,7 +95,7 @@ def get_message(conversation_id: str, message_id: str, max_retries: int = None, 
                 time.sleep(retry_interval)
             
             else:
-                print(f"[STRAVITO_CLIENT] ⚠️  Unknown status: {status}, treating as in-progress")
+                print(f"[STRAVITO_CLIENT] ⚠️  Unknown state: {state}, treating as in-progress")
                 retry_count += 1
                 time.sleep(retry_interval)
         

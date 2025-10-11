@@ -89,7 +89,7 @@ class QueryOrchestrator:
             if not data:
                 continue
             
-            # Extract key information
+            # Extract key information including sources
             normalized_response = {
                 "angle": response["angle"],
                 "conversation_id": response["conversation_id"],
@@ -97,7 +97,8 @@ class QueryOrchestrator:
                 "content": data.get("content", ""),
                 "metadata": data.get("metadata", {}),
                 "timestamp": data.get("timestamp", ""),
-                "status": data.get("status", "")
+                "status": data.get("status", ""),
+                "sources": data.get("sources", [])  # Extract sources array
             }
             normalized.append(normalized_response)
         
@@ -149,10 +150,19 @@ class QueryOrchestrator:
         if not responses:
             return {"error": "No valid responses to synthesize"}
         
-        # Prepare response texts for synthesis
+        # Prepare response texts for synthesis and collect all sources
         response_texts = []
+        all_sources = []
+        source_map = {}  # To deduplicate sources by sourceId
+        
         for r in responses:
             response_texts.append(f"Angle: {r['angle']}\nResponse: {r['content']}")
+            # Collect and deduplicate sources
+            for source in r.get('sources', []):
+                source_id = source.get('sourceId')
+                if source_id and source_id not in source_map:
+                    source_map[source_id] = source
+                    all_sources.append(source)
         
         synthesis_prompt = f"""
         Original Query: "{original_query}"
@@ -185,6 +195,7 @@ class QueryOrchestrator:
                 "synthesized_report": synthesized_report,
                 "source_angles": [r["angle"] for r in responses],
                 "total_angles_processed": len(responses),
+                "sources": all_sources,  # Include all collected sources
                 "timestamp": asyncio.get_event_loop().time()
             }
             

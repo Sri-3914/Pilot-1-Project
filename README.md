@@ -8,6 +8,7 @@ A FastAPI backend with Streamlit UI that processes queries through multiple anal
 - **Parallel Processing**: Uses asyncio to process all angles simultaneously for faster results
 - **Contradiction Detection**: Identifies and analyzes contradictions between different angle responses
 - **Intelligent Synthesis**: Uses Azure OpenAI to create comprehensive, structured reports
+- **Citation System**: ChatGPT-style source attribution with clickable citations and references
 - **Modern UI**: Clean Streamlit interface with real-time progress tracking
 - **Robust Error Handling**: Graceful handling of API failures and edge cases
 
@@ -100,6 +101,19 @@ The UI will be available at `http://localhost:8501`
 3. Click "Process Query" to start the analysis
 4. Wait for the multi-angle processing to complete
 5. Review the synthesized report and detailed analysis
+6. Click on citation badges to view source documents
+7. Explore individual sources in the dedicated Sources section
+
+#### Citations and Sources
+
+The application now includes a comprehensive citation system:
+
+- **Quick Citation Badges**: Clickable numbered badges ([1], [2], etc.) at the end of the report
+- **Source Cards**: Detailed cards showing title, excerpt, page number, and clickable links
+- **Per-Angle Sources**: See which sources contributed to each analytical angle
+- **Interactive Links**: Click any source to open the original document in a new tab
+
+For detailed information about the citation system, see [CITATIONS_GUIDE.md](CITATIONS_GUIDE.md).
 
 ## API Endpoints
 
@@ -133,10 +147,11 @@ Pilot-1-Project/
 ├── orchestrator.py         # Core orchestration logic
 ├── stravito_client.py      # Stravito API client
 ├── config.py              # Configuration management
-├── streamlit_app.py       # Streamlit UI
+├── streamlit_app.py       # Streamlit UI with citation display
 ├── requirements.txt       # Python dependencies
 ├── env.example           # Environment variables template
-└── README.md             # This file
+├── README.md             # This file
+└── CITATIONS_GUIDE.md    # Detailed citation system documentation
 ```
 
 ## How It Works
@@ -144,10 +159,11 @@ Pilot-1-Project/
 1. **Query Input**: User submits a query through the Streamlit UI
 2. **Angle Generation**: Azure OpenAI generates multiple analytical angles
 3. **Parallel Processing**: Each angle is processed through Stravito API simultaneously
-4. **Response Normalization**: Raw responses are cleaned and structured
+4. **Response Normalization**: Raw responses are cleaned and structured, sources are extracted
 5. **Contradiction Analysis**: AI analyzes responses for conflicts or inconsistencies
-6. **Report Synthesis**: Azure OpenAI creates a comprehensive, structured report
-7. **Results Display**: Streamlit UI presents the final report and detailed analysis
+6. **Source Collection**: Citations are collected and deduplicated across all angles
+7. **Report Synthesis**: Azure OpenAI creates a comprehensive, structured report
+8. **Results Display**: Streamlit UI presents the final report with interactive citations and source cards
 
 ## Configuration
 
